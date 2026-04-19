@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NextGen Slicer - Balls Team</title>
+  <style>
+    /* ===== CSS-переменные тем ===== */
+    :root {
+      --bg-page: #ffffff; --bg-header: #f8f9fa; --bg-card: #ffffff;
+      --bg-overlay: rgba(255,255,255,0.95); --bg-modal: #ffffff;
+      --text-primary: #1a1a2e; --text-secondary: #4a5568; --text-muted: #94a3b8;
+      --accent: #3498db; --accent-hover: #2980b9; --accent-soft: rgba(52,152,219,0.08);
+      --accent-border: #3498db;
+      --border: #e2e8f0; --shadow: 0 4px 20px rgba(0,0,0,0.06);
+      --toggle-bg: #cbd5e0; --toggle-ball: #ffffff;
+      --highlight-bg: #f0f7ff; --highlight-dark-bg: #1e293b;
+    }
+    [data-theme="dark"] {
+      --bg-page: #0f0f1a; --bg-header: #1a1a2e; --bg-card: #16213e;
+      --bg-overlay: rgba(15,15,26,0.95); --bg-modal: #1a1a2e;
+      --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+      --accent: #5dade2; --accent-hover: #3498db; --accent-soft: rgba(93,173,226,0.12);
+      --accent-border: #5dade2;
+      --border: #2d3748; --shadow: 0 4px 20px rgba(0,0,0,0.35);
+      --toggle-bg: #4a5568; --toggle-ball: #e2e8f0;
+      --highlight-bg: #1e293b; --highlight-dark-bg: #0f172a;
+    }
+
+    /* ===== Базовые стили ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-page); color: var(--text-primary);
+      line-height: 1.6; min-height: 100vh; padding-top: 72px;
+    }
+
+    /* ===== Шапка ===== */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem; background: var(--bg-header);
+      border-bottom: 1px solid var(--border); box-shadow: var(--shadow);
+      height: 72px;
+    }
+    .header-left { font-weight: 600; font-size: 1.1rem; color: var(--text-secondary); }
+    .header-center {
+      font-weight: 700; font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .theme-toggle {
+      position: relative; width: 52px; height: 28px;
+      background: var(--toggle-bg); border-radius: 14px;
+      cursor: pointer; border: none; outline: none;
+    }
+    .theme-toggle::after {
+      content: ""; position: absolute; top: 3px; left: 3px;
+      width: 22px; height: 22px; background: var(--toggle-ball);
+      border-radius: 50%; transition: transform 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    [data-theme="dark"] .theme-toggle::after { transform: translateX(24px); }
+
+    .hamburger {
+      display: flex; flex-direction: column; gap: 5px;
+      width: 32px; height: 24px; cursor: pointer; border: none;
+      background: transparent; padding: 0;
+    }
+    .hamburger span {
+      display: block; width: 100%; height: 3px;
+      background: var(--text-primary); border-radius: 2px;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
+
+    .nav-dropdown {
+      position: absolute; top: 72px; right: 2rem;
+      background: var(--bg-header); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow);
+      padding: 0.5rem 0; min-width: 220px;
+      opacity: 0; visibility: hidden; transform: translateY(-10px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .nav-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
+    .nav-dropdown a {
+      display: block; padding: 0.75rem 1.5rem; color: var(--text-primary);
+      text-decoration: none; font-weight: 500; font-size: 0.95rem;
+      border-left: 3px solid transparent;
+    }
+    .nav-dropdown a:hover, .nav-dropdown a.active {
+      background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent);
+    }
+
+    /* ===== Секции и аккордеоны ===== */
+    .section-wrap { max-width: 1100px; margin: 0 auto 2.5rem; padding: 0 2rem; }
+    .accordion {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
+    }
+    .accordion-header {
+      padding: 1.3rem 1.5rem; cursor: pointer; display: flex;
+      justify-content: space-between; align-items: center;
+      font-size: 1.25rem; font-weight: 700; user-select: none;
+      border-bottom: 1px solid transparent;
+    }
+    .accordion.active .accordion-header { border-bottom-color: var(--border); }
+    .accordion-header:hover { background: var(--accent-soft); }
+    .arrow { transition: transform 0.3s ease; font-size: 0.9rem; opacity: 0.7; }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .accordion.active .accordion-content { max-height: 2500px; }
+    .accordion.active .arrow { transform: rotate(180deg); opacity: 1; }
+
+    .content-inner { padding: 0 1.5rem 1.5rem; }
+    .content-inner p, .content-inner ul { margin-bottom: 0.8rem; color: var(--text-secondary); }
+    .content-inner ul { padding-left: 1.2rem; }
+    .content-inner li { margin-bottom: 0.4rem; }
+
+    /* ✅ ЗАМЕТНЫЕ ЗАГОЛОВКИ ВНУТРИ СЕКЦИЙ */
+    .section-title {
+      display: block; font-size: 1.25rem; font-weight: 800;
+      color: var(--accent); margin: 1.5rem 0 0.8rem;
+      padding-bottom: 0.3rem; border-bottom: 2px solid var(--accent-soft);
+      position: relative;
+    }
+    .section-title::after {
+      content: ""; position: absolute; bottom: -2px; left: 0;
+      width: 40px; height: 2px; background: var(--accent);
+    }
+
+    .key-box {
+      background: var(--highlight-bg); border-left: 4px solid var(--accent-border);
+      padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 8px 8px 0;
+    }
+    [data-theme="dark"] .key-box { background: var(--highlight-dark-bg); }
+    .key-box strong { color: var(--text-primary); font-weight: 700; }
+    .subtle-list { list-style: none; padding: 0; }
+    .subtle-list li {
+      padding-left: 1.2rem; position: relative; margin-bottom: 0.5rem;
+    }
+    .subtle-list li::before {
+      content: ""; position: absolute; left: 0; top: 0.6em;
+      width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+    }
+
+    /* ✅ МЕТРИКИ КАЖДЫЙ С НОВОЙ СТРОКИ */
+    .metrics-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; }
+    .metric-item {
+      background: var(--bg-overlay); border: 1px solid var(--border);
+      padding: 0.8rem 1rem; border-radius: 8px; font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ===== Таблицы ===== */
+    .table-responsive { overflow-x: auto; margin: 1rem 0; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--accent-soft); font-weight: 700; color: var(--text-primary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: var(--accent-soft); }
+
+    /* ===== Карусель новостей ===== */
+    .pagination-section { margin-bottom: 2.5rem; }
+    .pagination-header { text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+    .carousel-wrapper {
+      position: relative; background: var(--bg-card);
+      border-radius: 16px; border: 1px solid var(--border);
+      box-shadow: var(--shadow); overflow: hidden; height: 320px;
+    }
+    .carousel-track { display: flex; height: 100%; transition: transform 0.4s ease; }
+    .news-slide {
+      min-width: 100%; padding: 2rem; display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      background: var(--bg-overlay); position: relative; z-index: 1; cursor: pointer;
+    }
+    .news-slide:hover { background: var(--accent-soft); }
+    .news-slide h3 { font-size: 1.4rem; margin-bottom: 0.6rem; color: var(--accent); font-weight: 700; }
+    .news-slide p { color: var(--text-secondary); max-width: 650px; line-height: 1.65; }
+    .news-date { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
+
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: transparent; box-shadow: none; color: var(--text-primary);
+      opacity: 0.3; cursor: pointer; transition: 0.3s;
+      padding: 25px; border-radius: 50%; font-size: 1.5rem; z-index: 10; border: none;
+    }
+    .carousel-btn:hover { background: var(--bg-overlay); box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 1; }
+    .btn-prev { left: 15px; }
+    .btn-next { right: 15px; }
+
+    .carousel-controls { position: absolute; bottom: 1.5rem; left: 0; right: 0; display: flex; justify-content: center; gap: 0.8rem; z-index: 5; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); cursor: pointer; transition: 0.2s; }
+    .dot.active { background: var(--accent); transform: scale(1.2); }
+
+    /* ✅ ПОЛНОЭКРАННЫЙ ПОПАП НОВОСТЕЙ */
+    .news-modal {
+      position: fixed; inset: 0; z-index: 3000;
+      background: var(--bg-page); overflow-y: auto;
+      display: none; flex-direction: column; align-items: center;
+      padding: 6rem 2rem 2rem; animation: fadeIn 0.3s ease;
+    }
+    .news-modal.active { display: flex; }
+    .news-modal-close {
+      position: fixed; top: 1.5rem; right: 2rem; z-index: 3001;
+      background: var(--bg-header); border: 1px solid var(--border);
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.5rem; color: var(--text-primary);
+      box-shadow: var(--shadow); transition: 0.2s;
+    }
+    .news-modal-close:hover { background: var(--accent); color: white; }
+    .news-modal-content { max-width: 800px; width: 100%; margin: 0 auto; }
+    .news-modal-date { font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .news-modal-title { font-size: 2.2rem; color: var(--accent); font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2; }
+    .news-modal-body { line-height: 1.8; color: var(--text-secondary); font-size: 1.15rem; }
+    .news-modal-body p { margin-bottom: 1.2rem; }
+
+    /* ===== Карточки команды ===== */
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .team-card {
+      padding: 1.3rem; background: var(--bg-overlay); border: 1px solid var(--border);
+      border-radius: 12px; text-align: center; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--accent); }
+    .team-card .name { font-weight: 700; margin-bottom: 0.3rem; }
+    .team-card .role { font-size: 0.85rem; color: var(--text-secondary); }
+
+    /* МОДАЛЬНОЕ ОКНО КОМАНДЫ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      display: none; justify-content: center; align-items: center;
+      z-index: 2000; padding: 1rem; backdrop-filter: blur(5px);
+    }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
+    .modal-box.photo-modal { background: transparent; box-shadow: none; border: none; padding: 0; max-width: 90vw; display: flex; justify-content: center; align-items: center; position: relative; }
+    .modal-img-full { max-width: 100%; max-height: 85vh; width: auto; height: auto; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); object-fit: contain; display: block; }
+    .modal-close { position: absolute; top: -40px; right: 0; background: none; border: none; font-size: 2.5rem; cursor: pointer; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); transition: 0.2s; }
+    .modal-close:hover { color: var(--accent); }
+
+    /* ===== Контакты ===== */
+    .contact-links { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1rem; }
+    .contact-links a {
+      color: var(--accent); text-decoration: none; font-weight: 600;
+      padding: 0.5rem 1rem; border: 1px solid var(--accent);
+      border-radius: 8px; transition: 0.2s;
+    }
+    .contact-links a:hover { background: var(--accent); color: #fff; }
+
+    /* ===== Адаптив ===== */
+    /* ===== ГЕРОЙ (Главная) ===== */
+    #hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+    #hero h1 { font-size: 2.6rem; margin-bottom: 0.6rem; line-height: 1.15; font-weight: 800; }
+    #hero .subtitle { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 1.2rem; }
+
+    .image-box {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-overlay));
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .image-box img.theme-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none; /* Скрыты по умолчанию */
+    }
+    /* Переключение тем */
+    [data-theme="light"] .image-box img.light-img { display: block; }
+    [data-theme="dark"] .image-box img.dark-img { display: block; }
+
+    @media (max-width: 900px) {
+      #hero { grid-template-columns: 1fr; }
+      .image-box { order: -1; max-width: 420px; margin: 0 auto 1.5rem; }
+      /* ...остальные ваши стили адаптива... */
+    }
+    @media (max-width: 900px) {
+      #hero { grid-template-columns: 1fr; }
+      .image-box { order: -1; max-width: 420px; margin: 0 auto 1.5rem; }
+      header { padding: 0.8rem 1.5rem; }
+      .carousel-wrapper { height: 360px; }
+      .news-modal { padding: 5rem 1.5rem 1.5rem; }
+      .news-modal-title { font-size: 1.8rem; }
+    }
+    @media (max-width: 600px) {
+      .section-wrap { padding: 0 1rem; }
+      .accordion-header { font-size: 1.1rem; padding: 1rem; }
+      .team-grid { grid-template-columns: 1fr 1fr; }
+      .modal-close { top: 10px; right: 10px; }
+      .news-modal-close { top: 1rem; right: 1rem; }
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<!-- Шапка -->
+<header>
+  <div class="header-left">Balls Team</div>
+  <div class="header-center">NextGen Slicer</div>
+  <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему"></button>
+    <button class="hamburger" id="hamburger" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <nav class="nav-dropdown" id="navDropdown">
+    <a href="#hero">Главная</a>
+    <a href="#theory">Теоретическая часть</a>
+    <a href="#tech">Техническая часть</a>
+    <a href="#news">Что нового</a>
+    <a href="#economics">Экономика</a>
+    <a href="#about">О нас и контакты</a>
+  </nav>
+</header>
+
+<main>
+  <!-- 1. ГЛАВНАЯ -->
+  <section id="hero" class="section-wrap">
+    <div class="content-left">
+      <h1>NextGen Slicer</h1>
+      <p class="subtitle">Первый слайсер с ИИ-коррекцией в реальном времени.</p>
+      <div class="key-box">
+        <strong>Что же это?</strong> Это единственное решение, объединяющее динамическую коррекцию во время печати (не только пост-анализ), NLP-анализ G-кода и обучение в симуляции Unity. В отличие от Blacksmith, не привязаны к своему принтеру; в отличие от AMFG, работает не только на уровне управления заказами, но и на уровне физического контура управления.
+      </div>
+    </div>
+    <div class="image-box">
+      <img src="img/img2.jpg" alt="NextGen Slicer (светлая тема)" class="theme-img light-img">
+      <img src="img/img1.jpg" alt="NextGen Slicer (тёмная тема)" class="theme-img dark-img">
+    </div>
+  </section>
+
+  <!-- 2. ТЕОРЕТИЧЕСКАЯ ЧАСТЬ -->
+  <section id="theory" class="section-wrap accordion">
+    <div class="accordion-header">Теоретическая часть <span class="arrow">▼</span></div>
+    <div class="accordion-content">
+      <div class="content-inner">
+        <h3 class="section-title">Аудитория потребителей</h3>
+        <ul class="subtle-list">
+          <li>Малые частные мастерские 3D-печати</li>
+          <li>R&D отделы промышленных заводов</li>
+          <li>Студенты-инженеры и исследовательские лаборатории</li>
+        </ul>
+        <div class="key-box">Все, кто сталкивается с <strong>высоким процентом брака</strong> и необходимостью постоянного контроля печати.</div>
+
+        <h3 class="section-title">Проблемы рынка и ограничения аналогов</h3>
+        <p>Основные боли: высокая стоимость брака, необходимость постоянного присутствия человека, отсутствие зрения у принтера. Облачные камеры только останавливают печать, но не исправляют её.</p>
+        <div class="table-responsive">
+          <table>
+            <tr><th>Решение</th><th>Недостаток</th></tr>
+            <tr><td>3MF Consortium</td><td>Требует поддержки всего ПО; нет обратной связи</td></tr>
+            <tr><td>Markforged Blacksmith</td><td>Жесткая привязка к экосистеме Markforged</td></tr>
+            <tr><td>AMFG MES</td><td>Высокий порог внедрения, требует ИТ-ресурсов</td></tr>
+            <tr><td>3DPrinterOS</td><td>Зависимость от интернета, поверхностный контроль геометрии</td></tr>
+            <tr><td>Desktop Metal Live Sinter</td><td>Только для спекания металлов/керамики</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ТЕХНИЧЕСКАЯ ЧАСТЬ -->
+  <section id="tech" class="section-wrap accordion">
+    <div class="accordion-header">Техническая часть <span class="arrow">▼</span></div>
+    <div class="accordion-content">
+      <div class="content-inner">
+        <h3 class="section-title">УТП (Уникальное торговое предложение)</h3>
+        <ul class="subtle-list">
+          <li><strong>Оригинально:</strong> единственное решение с динамической коррекцией во время печати</li>
+          <li><strong>Понятно:</strong> NLP-анализ G-кода + обучение в симуляции Unity</li>
+          <li><strong>Правдиво:</strong> работает с любыми FDM-принтерами, не требует постоянного интернета</li>
+          <li><strong>Запоминается:</strong> динамическое изменение G-кода через USB-стриминг с учетом буфера Marlin</li>
+        </ul>
+
+        <h3 class="section-title">Архитектура решения</h3>
+        <div class="key-box">
+          <strong>Замкнутый интеллектуальный контур:</strong><br>
+          5+ датчиков → Нейросеть Mamba → Слой безопасности → Патчинг G-кода через USB-стриминг
+        </div>
+        <p><strong>Стек технологий:</strong> Cura Engine (база), PyTorch (обучение), Unity + ML-Agents (симуляция), Mamba/SSM (временные ряды), NLP-анализ (структура G-кода), Safety Layer (безопасный патчинг), USB-стриминг (работа с Marlin без интернета).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ЧТО НОВОГО -->
+  <section id="news" class="section-wrap pagination-section">
+    <div class="pagination-header">Что нового</div>
+    <div class="carousel-wrapper">
+      <button class="carousel-btn btn-prev" id="prevBtn">❮</button>
+      <button class="carousel-btn btn-next" id="nextBtn">❯</button>
+      <div class="carousel-track" id="carouselTrack"></div>
+      <div class="carousel-controls" id="dotsContainer"></div>
+    </div>
+  </section>
+
+  <!-- Полноэкранный попап новостей -->
+  <div class="news-modal" id="newsModal">
+    <button class="news-modal-close" id="newsModalClose">×</button>
+    <div class="news-modal-content">
+      <div class="news-modal-date" id="newsModalDate"></div>
+      <h2 class="news-modal-title" id="newsModalTitle"></h2>
+      <div class="news-modal-body" id="newsModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 5. ЭКОНОМИКА -->
+  <section id="economics" class="section-wrap accordion">
+    <div class="accordion-header">Экономика <span class="arrow">▼</span></div>
+    <div class="accordion-content">
+      <div class="content-inner">
+        <h3 class="section-title">Каналы продвижения</h3>
+        <ul class="subtle-list">
+          <li>Сообщества по интересам (Telegram, Reddit, форумы)</li>
+          <li>Профильные выставки аддитивных технологий</li>
+          <li>Прямые продажи владельцам ферм 3D-печати</li>
+          <li>Сарафанное радио и реферальная программа</li>
+        </ul>
+
+        <h3 class="section-title">Доходы</h3>
+        <div class="key-box">
+          <strong>Модель монетизации:</strong><br>
+          - Подписка для физлиц: 799-1199 ₽/мес<br>
+          - Подписка для юрлиц: от 15 999 до 44 999 ₽/мес<br>
+          - Процент с продаж пользовательских моделей и их наработок
+        </div>
+
+        <h3 class="section-title">Оптимизированная смета (~915 000 ₽)</h3>
+        <div class="table-responsive">
+          <table>
+            <tr><th>Статья расходов</th><th>Сумма (₽)</th><th>Как сэкономили</th></tr>
+            <tr><td>Сервера и ПО</td><td>657 600</td><td>Базовая цена (без НДС)</td></tr>
+            <tr><td>Размещение в ЦОД (год)</td><td>70 000</td><td>Вместо офиса. Свет и охрана включены</td></tr>
+            <tr><td>Информ. безопасность</td><td>30 000</td><td>Только критическое ПО/лицензии</td></tr>
+            <tr><td>Налог (НДФЛ 13%)</td><td>135 000</td><td>Оформление как выплата физлицу (грант)</td></tr>
+            <tr><td>Сертификат SSL</td><td>0</td><td>Бесплатный Let's Encrypt</td></tr>
+            <tr><td>Страховка</td><td>10 000</td><td>-</td></tr>
+            <tr><td>Администрирование</td><td>12 400</td><td>Остаток на мелкие расходы/настройку</td></tr>
+            <tr style="font-weight:700;"><td>Итого</td><td>~915 000</td><td>Запас ~85 000 ₽ на непредвиденное</td></tr>
+          </table>
+        </div>
+        <p style="margin-top:1rem; font-size:0.9rem;">Дополнительно: научная статья - 20 000 ₽ | Маркетинг - до 65 000 ₽</p>
+
+        <h3 class="section-title">Ключевые метрики</h3>
+        <div class="metrics-list">
+          <div class="metric-item">Популярность проекта</div>
+          <div class="metric-item">Спрос на продукт</div>
+          <div class="metric-item">Отзывы аудитории о качестве разработки</div>
+          <div class="metric-item">Retention пользователей</div>
+        </div>
+        <p style="font-style:italic; color:var(--text-secondary); margin-top:0.5rem;">Отслеживаются через встроенную аналитику и обратную связь.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. О НАС И КОНТАКТЫ -->
+  <section id="about" class="section-wrap accordion">
+    <div class="accordion-header">О нас и контакты <span class="arrow">▼</span></div>
+    <div class="accordion-content">
+      <div class="content-inner">
+        <h3 class="section-title">Наше преимущество</h3>
+        <div class="key-box" style="background: linear-gradient(135deg, var(--accent-soft), transparent); border-left-color: var(--accent-hover);">
+          <p style="font-weight:700; margin-bottom:0.5rem;">Единственное решение, объединяющее:</p>
+          <ul class="subtle-list">
+            <li>Динамическую коррекцию во время печати (не только пост-анализ)</li>
+            <li>NLP-анализ G-кода как последовательного текста</li>
+            <li>Обучение в симуляции Unity (Sim-to-Real)</li>
+          </ul>
+          <p style="margin-top:0.8rem;"><strong>Главное преодолённое ограничение:</strong> не привязаны к одному принтеру (против Blacksmith), не требуем постоянного интернета (против 3DPrinterOS), работаем с FDM (против Live Sinter), даем обратную связь в реальном времени (против 3MF).</p>
+          <p style="margin-top:0.5rem;"><strong>Уникальная возможность:</strong> динамическое изменение G-кода на лету через USB-стриминг с учетом буфера Marlin - никто из конкурентов этого не делает.</p>
+        </div>
+
+        <h3 class="section-title">Команда</h3>
+        <p style="margin-bottom:1rem;">Нажмите на карточку, чтобы увидеть фото:</p>
+        <div class="team-grid">
+          <div class="team-card" data-img="img/Danil.jpg"><div class="name">Даниил Григорьев</div><div class="role">Капитан, интеграция, виртуальная среда</div></div>
+          <div class="team-card" data-img="img/Artem.jpg"><div class="name">Артем Щудро</div><div class="role">Архитектор нейросетей</div></div>
+          <div class="team-card" data-img="img/Maxim.jpg"><div class="name">Максим Прищепа</div><div class="role">Инженер по сенсорам, ассистент ИИ</div></div>
+          <div class="team-card" data-img="img/Kirill.jpg"><div class="name">Кирилл Власов</div><div class="role">Экономист, патенты, разработчик сайта</div></div>
+          <div class="team-card" data-img="img/Valera.jpg"><div class="name">Валерий Шевцов</div><div class="role">Симуляции, тестировщик среды</div></div>
+        </div>
+
+        <h3 class="section-title">Контакты</h3>
+        <p>Готовы начать сотрудничество или протестировать бета-версию?</p>
+        <div class="contact-links">
+          <a href="mailto:ballsteamsupport@gmail.com">Email</a>
+          <a href="https://github.com/BallsTeamOff" target="_blank">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Модальное окно команды -->
+<div class="modal-overlay" id="teamModal">
+  <div class="modal-box photo-modal">
+    <button class="modal-close" id="closeModal">×</button>
+    <img id="modalImg" src="" alt="Участник" class="modal-img-full">
+  </div>
+</div>
+
+<script>
+  // ===== ДАННЫЕ НОВОСТЕЙ (РЕДАКТИРОВАТЬ ЗДЕСЬ ГАДДЭМ) =====
+  // Чтобы добавить новость, скопируйте объект {} и вставьте в массив.
+  // id должен быть уникальным. fullContent поддерживает HTML.
+  const newsData = [
+    {
+      id: 1,
+      date: "Апрель 2026",
+      title: "Запуск симуляции Sim-to-Real",
+      preview: "Интегрирована физическая среда Unity + ML-Agents. Модель проходит обучение на виртуальном стенде Anycubic Mega X.",
+      fullContent: "<p>Мы успешно интегрировали физическую среду Unity в связке с ML-Agents. Это позволило создать виртуальный стенд на базе принтера Anycubic Mega X, где нейросеть обучается распознавать и предсказывать дефекты печати без затрат реального пластика и времени.</p><p><strong>Результат:</strong> сокращение затрат на реальные тесты на 70% и ускорение итераций обучения модели.</p>"
+    },
+    {
+      id: 2,
+      date: "Скоро",
+      title: "Новые обновления проекта",
+      preview: "Скоро здесь будет больше новостей о ходе разработки.",
+      fullContent: "<p>Команда активно работает над ядром парсера G-кода и Safety Layer v1. Следите за обновлениями в этом разделе. Мы планируем публиковать прогресс каждые 2-3 недели.</p>"
+    }
+  ];
+
+  // ===== ИНИЦИАЛИЗАЦИЯ =====
+  const track = document.getElementById('carouselTrack');
+  const dotsContainer = document.getElementById('dotsContainer');
+  let currentSlide = 0;
+
+  // Рендер слайдов
+  function renderCarousel() {
+    track.innerHTML = '';
+    dotsContainer.innerHTML = '';
+    newsData.forEach((news, i) => {
+      // Слайд
+      const slide = document.createElement('div');
+      slide.className = 'news-slide';
+      slide.dataset.id = news.id;
+      slide.innerHTML = `<div class="news-date">${news.date}</div><h3>${news.title}</h3><p>${news.preview}</p>`;
+      track.appendChild(slide);
+
+      // Точка
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+    attachSlideClicks();
+  }
+
+  function goToSlide(n) {
+    currentSlide = (n + newsData.length) % newsData.length;
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+  }
+
+  function attachSlideClicks() {
+    document.querySelectorAll('.news-slide').forEach(slide => {
+      slide.addEventListener('click', () => {
+        const id = parseInt(slide.dataset.id);
+        const data = newsData.find(n => n.id === id);
+        if (!data) return;
+        document.getElementById('newsModalDate').textContent = data.date;
+        document.getElementById('newsModalTitle').textContent = data.title;
+        document.getElementById('newsModalBody').innerHTML = data.fullContent;
+        document.getElementById('newsModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => goToSlide(currentSlide - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => goToSlide(currentSlide + 1));
+  setInterval(() => goToSlide(currentSlide + 1), 8000);
+
+  // Закрытие попапа новостей
+  document.getElementById('newsModalClose').addEventListener('click', () => {
+    document.getElementById('newsModal').classList.remove('active');
+    document.body.style.overflow = '';
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('newsModal').classList.contains('active')) {
+      document.getElementById('newsModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // ===== ТЕМА =====
+  const toggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+  const saved = localStorage.getItem('theme');
+  if (saved) html.setAttribute('data-theme', saved);
+  toggle.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+
+  // ===== ГАМБУРГЕР =====
+  const hamburger = document.getElementById('hamburger');
+  const nav = document.getElementById('navDropdown');
+  const navLinks = nav.querySelectorAll('a');
+  hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); nav.classList.toggle('active'); });
+  navLinks.forEach(link => { link.addEventListener('click', () => { hamburger.classList.remove('active'); nav.classList.remove('active'); }); });
+  document.addEventListener('click', (e) => { if (!hamburger.contains(e.target) && !nav.contains(e.target)) { hamburger.classList.remove('active'); nav.classList.remove('active'); } });
+
+  // ===== АККОРДЕОНЫ =====
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const parent = header.parentElement;
+      const content = parent.querySelector('.accordion-content');
+      parent.classList.toggle('active');
+      if (parent.classList.contains('active')) {
+        content.style.maxHeight = content.scrollHeight + 'px';
+      } else { content.style.maxHeight = '0'; }
+    });
+  });
+
+  // ===== МОДАЛКА КОМАНДЫ =====
+  const modal = document.getElementById('teamModal');
+  const modalImg = document.getElementById('modalImg');
+  document.querySelectorAll('.team-card').forEach(card => {
+    card.addEventListener('click', () => {
+      modalImg.src = card.dataset.img || 'img/default-avatar.png';
+      modal.classList.add('active');
+    });
+  });
+  document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+  // ===== ПОДСВЕТКА АКТИВНОГО РАЗДЕЛА =====
+  const sections = document.querySelectorAll('section[id]');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(sec => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 150 && rect.bottom >= 150) current = sec.id;
+    });
+    navLinks.forEach(link => { link.classList.toggle('active', link.getAttribute('href') === `#${current}`); });
+  });
+
+  // Запуск
+  renderCarousel();
+</script>
+</body>
+</html>
