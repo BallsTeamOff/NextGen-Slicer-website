@@ -29,8 +29,9 @@ const currentYear = document.getElementById("currentYear");
 const cursorAura = document.getElementById("cursorAura");
 const pageShell = document.getElementById("pageShell");
 const symbolField = document.getElementById("symbolField");
-const symbols = Array.from(symbolField ? symbolField.children : []);
+let symbols = Array.from(symbolField ? symbolField.children : []);
 const tiltTargets = Array.from(document.querySelectorAll("[data-tilt]"));
+const trailSymbols = ["△", "○", "×", "+", "□"];
 
 let activePreviewState = "monitor";
 let previewTimer = null;
@@ -180,7 +181,8 @@ function enableTilt() {
 function initPointerField() {
   if (
     !cursorAura ||
-    !symbols.length ||
+    !symbolField ||
+    !window.matchMedia("(pointer: fine)").matches ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
   ) {
     return;
@@ -193,26 +195,74 @@ function initPointerField() {
     ty: window.innerHeight / 2
   };
 
-  const state = symbols.map((symbol, index) => ({
-    element: symbol,
-    baseX: ((index % 4) + 0.5) * (window.innerWidth / 4),
-    baseY: (Math.floor(index / 4) + 0.7) * (window.innerHeight / 3.7),
-    depth: 0.08 + (index % 4) * 0.02,
-    drift: index * 0.36
-  }));
+  let state = [];
+  let lastRevealTime = 0;
 
   function layout() {
-    state.forEach((item, index) => {
-      item.baseX = ((index % 4) + 0.5) * (window.innerWidth / 4);
-      item.baseY = (Math.floor(index / 4) + 0.7) * (window.innerHeight / 3.7);
-    });
+    const spacingX = Math.max(82, Math.min(118, window.innerWidth / 13));
+    const spacingY = Math.max(74, Math.min(108, window.innerHeight / 8));
+    const cols = Math.ceil(window.innerWidth / spacingX) + 2;
+    const rows = Math.ceil(window.innerHeight / spacingY) + 2;
+
+    symbolField.replaceChildren();
+    state = [];
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const index = row * cols + col;
+        const element = document.createElement("span");
+        const offsetX = row % 2 ? spacingX * 0.48 : 0;
+        const baseX = col * spacingX + offsetX - spacingX * 0.55;
+        const baseY = row * spacingY - spacingY * 0.45;
+
+        element.className = "symbol";
+        element.textContent = trailSymbols[index % trailSymbols.length];
+        symbolField.appendChild(element);
+        state.push({
+          element,
+          baseX,
+          baseY,
+          drift: index * 0.21,
+          litAt: -Infinity,
+          intensity: 0
+        });
+      }
+    }
+
+    symbols = Array.from(symbolField.children);
   }
 
   window.addEventListener("resize", layout);
-  window.addEventListener("mousemove", (event) => {
+  window.addEventListener("pointermove", (event) => {
+    if (event.pointerType && event.pointerType !== "mouse" && event.pointerType !== "pen") {
+      return;
+    }
+
     pointer.tx = event.clientX;
     pointer.ty = event.clientY;
-  });
+    const now = performance.now();
+    if (now - lastRevealTime < 24) {
+      return;
+    }
+
+    lastRevealTime = now;
+    revealSymbolGrid(event.clientX, event.clientY, now);
+  }, { passive: true });
+
+  function revealSymbolGrid(x, y, now) {
+    const radius = Math.min(180, Math.max(130, window.innerWidth * 0.1));
+
+    state.forEach((item) => {
+      const distance = Math.hypot(x - item.baseX, y - item.baseY);
+      if (distance > radius) {
+        return;
+      }
+
+      item.litAt = now;
+      item.intensity = Math.max(item.intensity, 1 - distance / radius);
+      item.element.classList.add("is-lit");
+    });
+  }
 
   function frame() {
     pointer.x += (pointer.tx - pointer.x) * 0.1;
@@ -229,11 +279,18 @@ function initPointerField() {
     const ny = pointer.y / window.innerHeight - 0.5;
 
     state.forEach((item, index) => {
-      const wave = Math.sin(performance.now() * 0.00065 + item.drift) * 9;
-      const x = item.baseX + nx * 130 * item.depth + wave;
-      const y = item.baseY + ny * 100 * item.depth - wave * 0.32;
-      const rotate = nx * 18 + index * 5;
-      const opacity = Math.max(0.06, 0.18 - Math.abs(nx) * 0.08);
+      const elapsed = performance.now() - item.litAt;
+      const fade = Math.max(0, 1 - elapsed / 1450);
+      const wave = Math.sin(performance.now() * 0.00055 + item.drift) * 3;
+      const x = item.baseX + nx * 18 + wave;
+      const y = item.baseY + ny * 14 - wave * 0.3;
+      const rotate = nx * 8 + index * 7;
+      const opacity = Math.min(0.48, Math.max(0, fade * item.intensity * 0.5));
+
+      if (fade <= 0.02) {
+        item.intensity = 0;
+        item.element.classList.remove("is-lit");
+      }
 
       item.element.style.transform = `translate(${x}px, ${y}px) rotate(${rotate}deg)`;
       item.element.style.opacity = String(opacity);
