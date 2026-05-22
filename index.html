@@ -1,660 +1,634 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="light">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NextGen Slicer - Balls Team</title>
-  <style>
-    /* ===== CSS-переменные тем ===== */
-    :root {
-      --bg-page: #ffffff; --bg-header: #f8f9fa; --bg-card: #ffffff;
-      --bg-overlay: rgba(255,255,255,0.95); --bg-modal: #ffffff;
-      --text-primary: #1a1a2e; --text-secondary: #4a5568; --text-muted: #94a3b8;
-      --accent: #3498db; --accent-hover: #2980b9; --accent-soft: rgba(52,152,219,0.08);
-      --accent-border: #3498db;
-      --border: #e2e8f0; --shadow: 0 4px 20px rgba(0,0,0,0.06);
-      --toggle-bg: #cbd5e0; --toggle-ball: #ffffff;
-      --highlight-bg: #f0f7ff; --highlight-dark-bg: #1e293b;
-    }
-    [data-theme="dark"] {
-      --bg-page: #0f0f1a; --bg-header: #1a1a2e; --bg-card: #16213e;
-      --bg-overlay: rgba(15,15,26,0.95); --bg-modal: #1a1a2e;
-      --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
-      --accent: #5dade2; --accent-hover: #3498db; --accent-soft: rgba(93,173,226,0.12);
-      --accent-border: #5dade2;
-      --border: #2d3748; --shadow: 0 4px 20px rgba(0,0,0,0.35);
-      --toggle-bg: #4a5568; --toggle-ball: #e2e8f0;
-      --highlight-bg: #1e293b; --highlight-dark-bg: #0f172a;
-    }
-
-    /* ===== Базовые стили ===== */
-    * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg-page); color: var(--text-primary);
-      line-height: 1.6; min-height: 100vh; padding-top: 72px;
-    }
-
-    /* ===== Шапка ===== */
-    header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 2rem; background: var(--bg-header);
-      border-bottom: 1px solid var(--border); box-shadow: var(--shadow);
-      height: 72px;
-    }
-    .header-left { font-weight: 600; font-size: 1.1rem; color: var(--text-secondary); }
-    .header-center {
-      font-weight: 700; font-size: 1.3rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .header-right { display: flex; align-items: center; gap: 1rem; }
-
-    .theme-toggle {
-      position: relative; width: 52px; height: 28px;
-      background: var(--toggle-bg); border-radius: 14px;
-      cursor: pointer; border: none; outline: none;
-    }
-    .theme-toggle::after {
-      content: ""; position: absolute; top: 3px; left: 3px;
-      width: 22px; height: 22px; background: var(--toggle-ball);
-      border-radius: 50%; transition: transform 0.3s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    [data-theme="dark"] .theme-toggle::after { transform: translateX(24px); }
-
-    .hamburger {
-      display: flex; flex-direction: column; gap: 5px;
-      width: 32px; height: 24px; cursor: pointer; border: none;
-      background: transparent; padding: 0;
-    }
-    .hamburger span {
-      display: block; width: 100%; height: 3px;
-      background: var(--text-primary); border-radius: 2px;
-      transition: transform 0.3s, opacity 0.3s;
-    }
-    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(6px, 6px); }
-    .hamburger.active span:nth-child(2) { opacity: 0; }
-    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px); }
-
-    .nav-dropdown {
-      position: absolute; top: 72px; right: 2rem;
-      background: var(--bg-header); border: 1px solid var(--border);
-      border-radius: 12px; box-shadow: var(--shadow);
-      padding: 0.5rem 0; min-width: 220px;
-      opacity: 0; visibility: hidden; transform: translateY(-10px);
-      transition: opacity 0.2s, transform 0.2s;
-    }
-    .nav-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
-    .nav-dropdown a {
-      display: block; padding: 0.75rem 1.5rem; color: var(--text-primary);
-      text-decoration: none; font-weight: 500; font-size: 0.95rem;
-      border-left: 3px solid transparent;
-    }
-    .nav-dropdown a:hover, .nav-dropdown a.active {
-      background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent);
-    }
-
-    /* ===== Секции и аккордеоны ===== */
-    .section-wrap { max-width: 1100px; margin: 0 auto 2.5rem; padding: 0 2rem; }
-    .accordion {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
-    }
-    .accordion-header {
-      padding: 1.3rem 1.5rem; cursor: pointer; display: flex;
-      justify-content: space-between; align-items: center;
-      font-size: 1.25rem; font-weight: 700; user-select: none;
-      border-bottom: 1px solid transparent;
-    }
-    .accordion.active .accordion-header { border-bottom-color: var(--border); }
-    .accordion-header:hover { background: var(--accent-soft); }
-    .arrow { transition: transform 0.3s ease; font-size: 0.9rem; opacity: 0.7; }
-    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-    .accordion.active .accordion-content { max-height: 2500px; }
-    .accordion.active .arrow { transform: rotate(180deg); opacity: 1; }
-
-    .content-inner { padding: 0 1.5rem 1.5rem; }
-    .content-inner p, .content-inner ul { margin-bottom: 0.8rem; color: var(--text-secondary); }
-    .content-inner ul { padding-left: 1.2rem; }
-    .content-inner li { margin-bottom: 0.4rem; }
-
-    /* ✅ ЗАМЕТНЫЕ ЗАГОЛОВКИ ВНУТРИ СЕКЦИЙ */
-    .section-title {
-      display: block; font-size: 1.25rem; font-weight: 800;
-      color: var(--accent); margin: 1.5rem 0 0.8rem;
-      padding-bottom: 0.3rem; border-bottom: 2px solid var(--accent-soft);
-      position: relative;
-    }
-    .section-title::after {
-      content: ""; position: absolute; bottom: -2px; left: 0;
-      width: 40px; height: 2px; background: var(--accent);
-    }
-
-    .key-box {
-      background: var(--highlight-bg); border-left: 4px solid var(--accent-border);
-      padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 8px 8px 0;
-    }
-    [data-theme="dark"] .key-box { background: var(--highlight-dark-bg); }
-    .key-box strong { color: var(--text-primary); font-weight: 700; }
-    .subtle-list { list-style: none; padding: 0; }
-    .subtle-list li {
-      padding-left: 1.2rem; position: relative; margin-bottom: 0.5rem;
-    }
-    .subtle-list li::before {
-      content: ""; position: absolute; left: 0; top: 0.6em;
-      width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
-    }
-
-    /* ✅ МЕТРИКИ КАЖДЫЙ С НОВОЙ СТРОКИ */
-    .metrics-list { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; }
-    .metric-item {
-      background: var(--bg-overlay); border: 1px solid var(--border);
-      padding: 0.8rem 1rem; border-radius: 8px; font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    /* ===== Таблицы ===== */
-    .table-responsive { overflow-x: auto; margin: 1rem 0; border-radius: 8px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-    th { background: var(--accent-soft); font-weight: 700; color: var(--text-primary); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover { background: var(--accent-soft); }
-
-    /* ===== Карусель новостей ===== */
-    .pagination-section { margin-bottom: 2.5rem; }
-    .pagination-header { text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
-    .carousel-wrapper {
-      position: relative; background: var(--bg-card);
-      border-radius: 16px; border: 1px solid var(--border);
-      box-shadow: var(--shadow); overflow: hidden; height: 320px;
-    }
-    .carousel-track { display: flex; height: 100%; transition: transform 0.4s ease; }
-    .news-slide {
-      min-width: 100%; padding: 2rem; display: flex; flex-direction: column;
-      justify-content: center; align-items: flex-start;
-      background: var(--bg-overlay); position: relative; z-index: 1; cursor: pointer;
-    }
-    .news-slide:hover { background: var(--accent-soft); }
-    .news-slide h3 { font-size: 1.4rem; margin-bottom: 0.6rem; color: var(--accent); font-weight: 700; }
-    .news-slide p { color: var(--text-secondary); max-width: 650px; line-height: 1.65; }
-    .news-date { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
-
-    .carousel-btn {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      background: transparent; box-shadow: none; color: var(--text-primary);
-      opacity: 0.3; cursor: pointer; transition: 0.3s;
-      padding: 25px; border-radius: 50%; font-size: 1.5rem; z-index: 10; border: none;
-    }
-    .carousel-btn:hover { background: var(--bg-overlay); box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 1; }
-    .btn-prev { left: 15px; }
-    .btn-next { right: 15px; }
-
-    .carousel-controls { position: absolute; bottom: 1.5rem; left: 0; right: 0; display: flex; justify-content: center; gap: 0.8rem; z-index: 5; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); cursor: pointer; transition: 0.2s; }
-    .dot.active { background: var(--accent); transform: scale(1.2); }
-
-    /* ✅ ПОЛНОЭКРАННЫЙ ПОПАП НОВОСТЕЙ */
-    .news-modal {
-      position: fixed; inset: 0; z-index: 3000;
-      background: var(--bg-page); overflow-y: auto;
-      display: none; flex-direction: column; align-items: center;
-      padding: 6rem 2rem 2rem; animation: fadeIn 0.3s ease;
-    }
-    .news-modal.active { display: flex; }
-    .news-modal-close {
-      position: fixed; top: 1.5rem; right: 2rem; z-index: 3001;
-      background: var(--bg-header); border: 1px solid var(--border);
-      width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 1.5rem; color: var(--text-primary);
-      box-shadow: var(--shadow); transition: 0.2s;
-    }
-    .news-modal-close:hover { background: var(--accent); color: white; }
-    .news-modal-content { max-width: 800px; width: 100%; margin: 0 auto; }
-    .news-modal-date { font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-    .news-modal-title { font-size: 2.2rem; color: var(--accent); font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2; }
-    .news-modal-body { line-height: 1.8; color: var(--text-secondary); font-size: 1.15rem; }
-    .news-modal-body p { margin-bottom: 1.2rem; }
-
-    /* ===== Карточки команды ===== */
-    .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    .team-card {
-      padding: 1.3rem; background: var(--bg-overlay); border: 1px solid var(--border);
-      border-radius: 12px; text-align: center; cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-    }
-    .team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--accent); }
-    .team-card .name { font-weight: 700; margin-bottom: 0.3rem; }
-    .team-card .role { font-size: 0.85rem; color: var(--text-secondary); }
-
-    /* МОДАЛЬНОЕ ОКНО КОМАНДЫ */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-      display: none; justify-content: center; align-items: center;
-      z-index: 2000; padding: 1rem; backdrop-filter: blur(5px);
-    }
-    .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
-    .modal-box.photo-modal { background: transparent; box-shadow: none; border: none; padding: 0; max-width: 90vw; display: flex; justify-content: center; align-items: center; position: relative; }
-    .modal-img-full { max-width: 100%; max-height: 85vh; width: auto; height: auto; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); object-fit: contain; display: block; }
-    .modal-close { position: absolute; top: -40px; right: 0; background: none; border: none; font-size: 2.5rem; cursor: pointer; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); transition: 0.2s; }
-    .modal-close:hover { color: var(--accent); }
-
-    /* ===== Контакты ===== */
-    .contact-links { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1rem; }
-    .contact-links a {
-      color: var(--accent); text-decoration: none; font-weight: 600;
-      padding: 0.5rem 1rem; border: 1px solid var(--accent);
-      border-radius: 8px; transition: 0.2s;
-    }
-    .contact-links a:hover { background: var(--accent); color: #fff; }
-
-    /* ===== Адаптив ===== */
-    /* ===== ГЕРОЙ (Главная) ===== */
-    #hero {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 3rem;
-      align-items: center;
-      margin-bottom: 2.5rem;
-    }
-    #hero h1 { font-size: 2.6rem; margin-bottom: 0.6rem; line-height: 1.15; font-weight: 800; }
-    #hero .subtitle { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 1.2rem; }
-
-    .image-box {
-      width: 100%;
-      aspect-ratio: 4/3;
-      background: linear-gradient(135deg, var(--bg-card), var(--bg-overlay));
-      border: 2px dashed var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .image-box img.theme-img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: none; /* Скрыты по умолчанию */
-    }
-    /* Переключение тем */
-    [data-theme="light"] .image-box img.light-img { display: block; }
-    [data-theme="dark"] .image-box img.dark-img { display: block; }
-
-    @media (max-width: 900px) {
-      #hero { grid-template-columns: 1fr; }
-      .image-box { order: -1; max-width: 420px; margin: 0 auto 1.5rem; }
-      /* ...остальные ваши стили адаптива... */
-    }
-    @media (max-width: 900px) {
-      #hero { grid-template-columns: 1fr; }
-      .image-box { order: -1; max-width: 420px; margin: 0 auto 1.5rem; }
-      header { padding: 0.8rem 1.5rem; }
-      .carousel-wrapper { height: 360px; }
-      .news-modal { padding: 5rem 1.5rem 1.5rem; }
-      .news-modal-title { font-size: 1.8rem; }
-    }
-    @media (max-width: 600px) {
-      .section-wrap { padding: 0 1rem; }
-      .accordion-header { font-size: 1.1rem; padding: 1rem; }
-      .team-grid { grid-template-columns: 1fr 1fr; }
-      .modal-close { top: 10px; right: 10px; }
-      .news-modal-close { top: 1rem; right: 1rem; }
-    }
-
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NextGen Slicer | Управляемый контур FDM-печати</title>
+  <meta
+    name="description"
+    content="NextGen Slicer — продуктовый контур для FDM 3D-печати: подготовка, предпросмотр, мониторинг, телеметрия, Safety Gate и bounded correction."
+  >
+  <link rel="icon" type="image/svg+xml" href="./assets/logo/nextgen-icon.svg">
+  <link rel="stylesheet" href="./styles.css?v=20260522-final-pass">
 </head>
 <body>
+  <div class="page-shell" id="pageShell">
+    <div class="cursor-aura" id="cursorAura"></div>
+    <div class="ambient ambient-left"></div>
+    <div class="ambient ambient-right"></div>
+    <div class="grid-layer"></div>
 
-<!-- Шапка -->
-<header>
-  <div class="header-left">Balls Team</div>
-  <div class="header-center">NextGen Slicer</div>
-  <div class="header-right">
-    <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему"></button>
-    <button class="hamburger" id="hamburger" aria-label="Меню">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="symbol-field" id="symbolField" aria-hidden="true">
+      <span class="symbol">△</span>
+      <span class="symbol">×</span>
+      <span class="symbol">○</span>
+      <span class="symbol">+</span>
+      <span class="symbol">□</span>
+      <span class="symbol">△</span>
+      <span class="symbol">○</span>
+      <span class="symbol">×</span>
+    </div>
+
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a class="brand" href="#top" aria-label="BallsAi">
+          <img class="brand-logo" src="./assets/logo/ballsai-brand.svg" alt="BallsAi">
+        </a>
+
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="siteNav">
+          <span></span>
+          <span></span>
+        </button>
+
+        <nav class="site-nav" id="siteNav" aria-label="Навигация по сайту">
+          <a href="#problem">Проблема</a>
+          <a href="#contour">Контур</a>
+          <a href="#flow">Продукт</a>
+          <a href="#architecture">Архитектура</a>
+          <a href="#current">Этап</a>
+          <a href="#team">Команда</a>
+          <a href="#contact">Пилот</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero section" aria-labelledby="heroTitle">
+        <div class="container hero-layout">
+          <div class="hero-copy" data-reveal>
+            <div class="eyebrow"><span></span> Адаптивный runtime-контур для FDM</div>
+            <h1 id="heroTitle">
+              Статичный G-code должен стать
+              <span>управляемым runtime печати.</span>
+            </h1>
+            <p>
+              NextGen Slicer связывает подготовку, постслойный риск-анализ, телеметрию и Safety Gate в один контур:
+              система видит ранний риск, сверяет его с G-code и пропускает только безопасную ограниченную коррекцию.
+            </p>
+
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://dank1-pro.github.io/nextgen-slicer/" target="_blank" rel="noreferrer">Открыть demo-контур</a>
+              <a class="button button-secondary" href="#contact">Запросить пилот</a>
+            </div>
+
+            <dl class="hero-metrics" aria-label="Целевые показатели">
+              <div>
+                <dt>40–60%</dt>
+                <dd>целевая гипотеза снижения брака</dd>
+              </div>
+              <div>
+                <dt>&lt; 2 сек</dt>
+                <dd>целевое окно реакции</dd>
+              </div>
+              <div>
+                <dt>5+ каналов</dt>
+                <dd>vision и сенсорная телеметрия</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="product-preview" data-reveal data-delay="110">
+            <div class="preview-shell" data-tilt>
+              <div class="preview-top">
+                <span class="status-dot"></span>
+                <span>Demo-контур · режим мониторинга</span>
+                <strong>Безопасный контур</strong>
+              </div>
+
+              <figure class="preview-frame">
+                <img src="./img/demo-monitor-overview.png" alt="Скриншот demo runtime NextGen Slicer в режиме мониторинга">
+                <figcaption class="preview-caption" id="previewCaption">
+                  <span id="previewKicker">Мониторинг</span>
+                  <strong id="previewTitle">Живой контур оператора</strong>
+                  <em id="previewText">Телеметрия, AI-подсказки, журнал событий и Safety Gate собраны в один экран.</em>
+                </figcaption>
+              </figure>
+
+              <div class="preview-tabs" id="previewTabs" aria-label="Состояния продукта">
+                <button class="preview-tab is-active" type="button" data-preview-state="prepare">
+                  <span>01</span>
+                  <strong>Подготовка</strong>
+                </button>
+                <button class="preview-tab" type="button" data-preview-state="preview">
+                  <span>02</span>
+                  <strong>Предпросмотр</strong>
+                </button>
+                <button class="preview-tab" type="button" data-preview-state="monitor">
+                  <span>03</span>
+                  <strong>Мониторинг</strong>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section problem" id="problem" aria-labelledby="problemTitle">
+        <div class="container split-layout">
+          <div class="section-copy" data-reveal>
+            <div class="section-label">Проблема</div>
+            <h2 id="problemTitle">FDM-печать чаще проигрывает не в момент настройки, а в момент поздней реакции.</h2>
+            <p>
+              Слайсер рассчитывает стартовые параметры, но реальная печать живёт по своей динамике:
+              адгезия, вибрации, подача филамента и температура меняются уже после генерации G-code.
+            </p>
+          </div>
+
+          <div class="problem-lines" data-reveal data-delay="90">
+            <article>
+              <span>01</span>
+              <h3>Дефект становится виден поздно</h3>
+              <p>Underextrusion, warping, spaghetti и layer shift часто заметны уже после потери материала и времени.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>G-code не связан с фактом</h3>
+              <p>Траектория известна заранее, но контур не сопоставляет её с телеметрией и визуальным состоянием слоя.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Нет безопасного действия</h3>
+              <p>Мониторинг, диагностика и коррекция обычно живут отдельно и не замыкаются в контролируемый runtime.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section audience" aria-labelledby="audienceTitle">
+        <div class="container audience-panel" data-reveal>
+          <div>
+            <div class="section-label">Кому это нужно</div>
+            <h2 id="audienceTitle">Лабораториям, FabLab, сервисам 3D-печати и малым инженерным командам нужен не ещё один экран, а снижение риска цикла.</h2>
+            <p>
+              Коммерческая логика проекта строится вокруг B2B-пилотов, лицензии/подписки, образовательного комплекта и open-core мониторингового стека.
+            </p>
+          </div>
+          <div class="audience-aside">
+            <div class="audience-list">
+              <span>университетские лаборатории</span>
+              <span>maker-space и FabLab</span>
+              <span>сервисы 3D-печати</span>
+              <span>малые производства</span>
+            </div>
+            <div class="market-proof">
+              <span>следующий покупательский сигнал</span>
+              <strong>пилот на реальном FDM-стенде</strong>
+              <p>не обещаем серийный продукт заранее: сначала валидируем дефекты, задержки и полезность для оператора.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section contour" id="contour" aria-labelledby="contourTitle">
+        <div class="container contour-layout">
+          <div class="section-copy contour-copy" data-reveal>
+            <div class="section-label">Идея продукта</div>
+            <h2 id="contourTitle">NextGen Slicer превращает slicing в runtime contour.</h2>
+            <p>
+              Главная ценность не в том, что система красиво показывает принтер. Ценность в маршруте:
+              Подготовка формирует безопасный старт, предпросмотр показывает риск, мониторинг удерживает процесс в коридоре действий.
+            </p>
+          </div>
+
+          <div class="contour-map" data-reveal data-delay="100">
+            <div class="contour-step">
+              <span>Подготовка</span>
+              <strong>модель, профиль, ограничения</strong>
+            </div>
+            <div class="contour-arrow"></div>
+            <div class="contour-step">
+              <span>Предпросмотр</span>
+              <strong>слои, траектория, risk score</strong>
+            </div>
+            <div class="contour-arrow"></div>
+            <div class="contour-step contour-step-active">
+              <span>Мониторинг</span>
+              <strong>телеметрия, Safety Gate, bounded correction</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section flow" id="flow" aria-labelledby="flowTitle">
+        <div class="container">
+          <div class="section-head" data-reveal>
+            <div class="section-label">Маршрут продукта</div>
+            <h2 id="flowTitle">Три состояния продукта, а не набор разрозненных экранов.</h2>
+            <p>Функции из demo runtime встроены в историю так, чтобы человек понимал, что можно открыть уже сейчас, а что идёт в следующую инженерную валидацию.</p>
+          </div>
+
+          <div class="flow-grid">
+            <article class="flow-card is-active" data-flow-card="prepare" data-reveal>
+              <span class="flow-number">01</span>
+              <div>
+                <small>Подготовка</small>
+                <h3>Подготовка до старта цикла</h3>
+                <p>Выбор модели, intent-профиля и Cura-параметров: высота слоя, заполнение, температура сопла, поддержки и AI-оптимизация.</p>
+                <ul>
+                  <li>модель из библиотеки и быстрый отклик загрузки</li>
+                  <li>режимы: точность, баланс, производительность</li>
+                  <li>границы безопасности фиксируются до печати</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="flow-card" data-flow-card="preview" data-reveal data-delay="80">
+              <span class="flow-number">02</span>
+              <div>
+                <small>Предпросмотр</small>
+                <h3>Постслойный риск-анализ</h3>
+                <p>Система заранее показывает стек слоёв, проход траектории, ETA, расход материала и зоны, где мониторинг должен быть особенно внимателен.</p>
+                <ul>
+                  <li>пример demo: слой 142 / 856 и 18% траектории</li>
+                  <li>оценка warping / overhang / support risk</li>
+                  <li>переход к мониторингу без потери контекста</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="flow-card" data-flow-card="monitor" data-reveal data-delay="160">
+              <span class="flow-number">03</span>
+              <div>
+                <small>Мониторинг</small>
+                <h3>Живой runtime и Safety Gate</h3>
+                <p>Телеметрия, дефекты, AI-рекомендация, журнал предупреждений, terminal feed и mock G-code stream сходятся в операторском экране.</p>
+                <ul>
+                  <li>сопло, стол, скорость, вибрация, подача, AI confidence</li>
+                  <li>дефекты: spaghetti, underextrusion, layer shift, warping</li>
+                  <li>коррекция проходит policy-check и audit log</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section difference" aria-labelledby="differenceTitle">
+        <div class="container split-layout">
+          <div class="section-copy" data-reveal>
+            <div class="section-label">Почему это не AI-обёртка</div>
+            <h2 id="differenceTitle">Система продаёт не “нейросеть для принтера”, а безопасную связь между прогнозом, наблюдением и действием.</h2>
+            <p>
+              Нейросеть не получает права писать произвольный G-code. Она формирует ограниченное предложение,
+              а Safety Gate проверяет диапазоны, буфер, контекст и журналирование перед действием.
+            </p>
+          </div>
+
+          <div class="principles" data-reveal data-delay="100">
+            <article>
+              <span>Runtime-контур</span>
+              <p>G-code, vision и телеметрия сверяются в одном временном контексте.</p>
+            </article>
+            <article>
+              <span>Safety Gate сначала</span>
+              <p>Каждое действие проходит policy-check, ограничения и audit trail.</p>
+            </article>
+            <article>
+              <span>FDM без привязки к бренду</span>
+              <p>Anycubic Mega X используется как опорная машина, но контур не строится как vendor lock.</p>
+            </article>
+            <article>
+              <span>Локальная логика + AI</span>
+              <p>Базовая логика может работать локально, а AI-слой усиливает риск-анализ там, где он нужен.</p>
+            </article>
+            <article>
+              <span>Ограниченная коррекция</span>
+              <p>Окна действий: скорость −18…+8%, температура −8…+6°C, подача −10…+8% перед проверкой Safety Gate.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section signals" aria-labelledby="signalsTitle">
+        <div class="container">
+          <div class="section-head" data-reveal>
+            <div class="section-label">Сенсорный контур</div>
+            <h2 id="signalsTitle">Мультимодальность нужна не ради количества датчиков, а чтобы закрыть слепые зоны печати.</h2>
+            <p>Камера видит результат, энкодер сравнивает команду E с фактом, IMU и ток ловят механику, звук помогает распознать экструдер, а профиль слоя даёт метрику геометрии.</p>
+          </div>
+
+          <div class="signal-grid" data-reveal data-delay="90">
+            <article>
+              <span>RGB-камера</span>
+              <strong>визуальное качество слоя</strong>
+              <p>spaghetti, наплывы, underextrusion, отрыв, layer shift и stringing.</p>
+            </article>
+            <article>
+              <span>Лидар / профиль</span>
+              <strong>метрика высоты и формы</strong>
+              <p>провалы, локальные превышения, warping и отклонение слоя от номинала.</p>
+            </article>
+            <article>
+              <span>Энкодер филамента</span>
+              <strong>команда E против факта</strong>
+              <p>ранний сигнал недоэкструзии, проскальзывания, засора или обрыва подачи.</p>
+            </article>
+            <article>
+              <span>IMU + ток + звук</span>
+              <strong>механика и нагрузка</strong>
+              <p>вибрации, щелчки экструдера, рост тока, риск layer shift и перегрузки осей.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section architecture" id="architecture" aria-labelledby="architectureTitle">
+        <div class="container architecture-layout">
+          <div class="section-head" data-reveal>
+            <div class="section-label">Архитектура</div>
+            <h2 id="architectureTitle">Cura остаётся проверенным ядром, а ценность создаётся вокруг него.</h2>
+            <p>Архитектура читается как pipeline, а не как список технологий: от модели и профиля до безопасного потока команд и evidence-логики.</p>
+          </div>
+
+          <div class="architecture-board" data-reveal data-delay="80">
+            <div class="arch-lane">
+              <span>01</span>
+              <strong>Интерфейс продукта</strong>
+              <p>подготовка, предпросмотр, мониторинг</p>
+            </div>
+            <div class="arch-lane">
+              <span>02</span>
+              <strong>Cura Engine</strong>
+              <p>профили, slicing, базовый G-code</p>
+            </div>
+            <div class="arch-lane">
+              <span>03</span>
+              <strong>Агентное ядро</strong>
+              <p>геометрия, vision, телеметрия, логика дефектов</p>
+            </div>
+            <div class="arch-lane arch-lane-strong">
+              <span>04</span>
+              <strong>Safety Gate</strong>
+              <p>policy-check, диапазоны, валидация, audit log</p>
+            </div>
+            <div class="arch-lane">
+              <span>05</span>
+              <strong>Принтер / USB</strong>
+              <p>Marlin buffer, bounded streaming, логи</p>
+            </div>
+            <div class="arch-lane">
+              <span>06</span>
+              <strong>Logs / Evidence</strong>
+              <p>HDF5, audit trail, отчёты, датасет</p>
+            </div>
+          </div>
+
+          <div class="architecture-details" data-reveal data-delay="140">
+            <article>
+              <span>Симуляционный стенд</span>
+              <strong>Unity + Anycubic Mega X</strong>
+              <p>6 типов дефектов, 7 виртуальных датчиков, RGB + Depth + Segmentation.</p>
+            </article>
+            <article>
+              <span>Контракт телеметрии</span>
+              <strong>Protobuf / WebSocket 4321 / HDF5</strong>
+              <p>Единый формат для кадров, сенсоров, команд и evidence-логики.</p>
+            </article>
+            <article>
+              <span>ML-направление</span>
+              <strong>Mamba / SSM + multimodal encoding</strong>
+              <p>Архитектурная гипотеза для временных рядов и ранних аномалий.</p>
+            </article>
+            <article>
+              <span>Sim-to-Real</span>
+              <strong>Simulation → Unity stream → real hardware</strong>
+              <p>Один формат данных для псевдоданных, Unity-потока и будущего физического стенда.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section proof" id="current" aria-labelledby="proofTitle">
+        <div class="container proof-layout">
+          <div class="section-copy" data-reveal>
+            <div class="section-label">Текущий этап</div>
+            <h2 id="proofTitle">Сейчас это сильный runtime-прототип и инженерная база для перехода на реальный стенд.</h2>
+            <p>
+              Уже можно показать продуктовый сценарий подготовка → предпросмотр → мониторинг, операторский экран, Safety Gate и реакцию на дефект.
+              Следующий шаг — связать это с физическим FDM-контуром, реальной телеметрией и датасетом.
+            </p>
+          </div>
+
+          <div class="proof-stack" data-reveal data-delay="90">
+            <article>
+              <span>Что уже есть</span>
+              <strong>Browser demo полного сценария</strong>
+              <p>Подготовка, предпросмотр, мониторинг, AI-подсказка, Safety Layer, alerts, terminal feed и mock G-code stream.</p>
+            </article>
+            <article>
+              <span>Что оформлено</span>
+              <strong>ТЗ по Unity, сенсорам и данным</strong>
+              <p>Описаны режимы simulation / Unity stream / real hardware, TelemetryFrame, синхронизация и HDF5-логирование.</p>
+            </article>
+            <article>
+              <span>Что важно честно</span>
+              <strong>Демо пока не подключено к реальному принтеру</strong>
+              <p>В текущем виде нет реального slicing, ML-инференса, WebSocket-потока от Unity и физического G-code patching.</p>
+            </article>
+            <article>
+              <span>Следующая валидация</span>
+              <strong>Реальный стенд и датасет</strong>
+              <p>FDM-принтер, телеметрия, задержки USB-streaming, safety-проверки и пилотная валидация.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="container demo-guide" data-reveal>
+          <div class="demo-guide-copy">
+            <div class="section-label">Как смотреть demo</div>
+            <h3>Открывать стоит как операторский сценарий, а не как статичную картинку.</h3>
+            <p>Демо показывает иллюзию будущего контура в браузере: оно не подключено к принтеру, но уже объясняет поведение продукта, реакцию Safety Gate и recovery-цикл.</p>
+          </div>
+          <div class="demo-steps">
+            <article><span>01</span><strong>Выбрать модель</strong><p>загрузить объект и увидеть быстрый отклик подготовки</p></article>
+            <article><span>02</span><strong>Режим скорости</strong><p>перейти к пресету, где риск становится заметнее</p></article>
+            <article><span>03</span><strong>Старт печати</strong><p>поднять скорость выше 170 мм/с и перейти в мониторинг</p></article>
+            <article><span>04</span><strong>Ввести дефект</strong><p>увидеть AI-рекомендацию, Safety Gate и возврат к stable</p></article>
+          </div>
+        </div>
+
+        <div class="container roadmap" data-reveal>
+          <div class="roadmap-track">
+            <article>
+              <span>0–3 мес</span>
+              <strong>Demo → интеграция</strong>
+              <p>дожать demo, связать сайт и agents, собрать сценарий дефекта</p>
+            </article>
+            <article>
+              <span>3–6 мес</span>
+              <strong>Cura → модель риска</strong>
+              <p>интеграция Cura, анализ G-code, базовая телеметрия</p>
+            </article>
+            <article>
+              <span>6–9 мес</span>
+              <strong>Стенд → safety</strong>
+              <p>USB-streaming, валидация задержек, FDM-тесты</p>
+            </article>
+            <article>
+              <span>9–12 мес</span>
+              <strong>Пилот и MVP</strong>
+              <p>лабораторный пилот, датасет, проверяемый MVP</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="container kpi-strip" data-reveal>
+          <article>
+            <span>Целевой KPI</span>
+            <strong>40–60%</strong>
+            <p>проектная гипотеза снижения брака</p>
+          </article>
+          <article>
+            <span>Нагрузка оператора</span>
+            <strong>до 80%</strong>
+            <p>цель снижения постоянного ручного присутствия</p>
+          </article>
+          <article>
+            <span>Реакция</span>
+            <strong>&lt; 2 сек</strong>
+            <p>целевое окно реакции на аномалию</p>
+          </article>
+          <article>
+            <span>Синхронизация</span>
+            <strong>±5 мс</strong>
+            <p>требуемая синхронизация каналов</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section market" aria-labelledby="marketTitle">
+        <div class="container market-layout">
+          <div class="section-copy" data-reveal>
+            <div class="section-label">Рынок / IP</div>
+            <h2 id="marketTitle">Отличие проекта в связке, которую аналоги чаще решают по частям.</h2>
+            <p>
+              Мы не заявляем, что продукт уже превосходит готовые промышленные системы. Корректная позиция сейчас:
+              NextGen Slicer собирает Cura-логику, runtime-мониторинг, Safety Gate и evidence-слой в один проверяемый маршрут.
+            </p>
+          </div>
+
+          <div class="market-grid" data-reveal data-delay="100">
+            <article>
+              <span>С чем сравниваем</span>
+              <strong>3MF / Blacksmith / AMFG / 3DPrinterOS</strong>
+              <p>они закрывают стандартизацию, мониторинг, производство или облачное управление, но не всегда дают безопасный контур действия на уровне потока команд.</p>
+            </article>
+            <article>
+              <span>White zones</span>
+              <strong>G-code Interceptor · Safety/Policy Layer · Sim-to-Real</strong>
+              <p>предварительно выделенные зоны для оформления IP, без заявления о готовой патентной защите.</p>
+            </article>
+            <article>
+              <span>Бизнес-модель</span>
+              <strong>B2B-пилоты, лицензия, образовательный комплект</strong>
+              <p>первый рынок — лаборатории, FabLab, сервисы 3D-печати и команды, которым важна проверяемая стабильность FDM-цикла.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section team" id="team" aria-labelledby="teamTitle">
+        <div class="container">
+          <div class="section-head" data-reveal>
+            <div class="section-label">Команда</div>
+            <h2 id="teamTitle">Команда закрывает полный контур: симуляцию, ML, сенсоры, рынок и интеграцию.</h2>
+            <p>Карточки больше не выглядят как вставленные слайды: каждый участник показан через роль, вклад и часть системы, за которую он отвечает.</p>
+          </div>
+
+          <div class="team-grid" data-reveal data-delay="90">
+            <article class="team-card">
+              <div class="team-avatar">ДГ</div>
+              <div class="team-info">
+                <span>Архитектура / интеграция</span>
+                <h3>Даниил Григорьев</h3>
+                <p>Координация проекта, сборка продуктового контура, связь Unity, Safety Layer и демонстрационного сценария.</p>
+              </div>
+            </article>
+            <article class="team-card">
+              <div class="team-avatar">ВШ</div>
+              <div class="team-info">
+                <span>Unity / simulation</span>
+                <h3>Валерий Шевцов</h3>
+                <p>Виртуальный стенд Anycubic Mega X, визуализация процесса, симуляция дефектов и подготовка synthetic data.</p>
+              </div>
+            </article>
+            <article class="team-card">
+              <div class="team-avatar">АЩ</div>
+              <div class="team-info">
+                <span>ML / CV / Mamba</span>
+                <h3>Артём Щудро</h3>
+                <p>Мультимодальные признаки, vision, Mamba/SSM-направление, inference-логика и риск-анализ.</p>
+              </div>
+            </article>
+            <article class="team-card">
+              <div class="team-avatar">МП</div>
+              <div class="team-info">
+                <span>Сенсоры / временные ряды</span>
+                <h3>Максим Прищепа</h3>
+                <p>Датчики, синхронизация каналов, TelemetryFrame, режимы simulation / Unity stream / real hardware.</p>
+              </div>
+            </article>
+            <article class="team-card">
+              <div class="team-avatar">КВ</div>
+              <div class="team-info">
+                <span>Рынок / IP / экономика</span>
+                <h3>Кирилл Власов</h3>
+                <p>Рынок, патентная стратегия, экономика пилота, ROI-логика и упаковка проекта для внешних партнёров.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section contact" id="contact" aria-labelledby="contactTitle">
+        <div class="container contact-panel" data-reveal>
+          <div class="contact-copy">
+            <div class="section-label">Запрос на пилот</div>
+            <h2 id="contactTitle">Чтобы довести проект до MVP, нам нужны стенд, реальная телеметрия и площадка для пилота.</h2>
+            <p>
+              Ближайший рубеж — связать UX-контур, симуляцию и реальный FDM-стенд в один проверяемый pipeline без потери безопасности.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="mailto:ballsteamsupport@gmail.com">Написать команде</a>
+              <a class="button button-secondary" href="https://github.com/BallsTeamOff/NextGen-Slicer-website" target="_blank" rel="noreferrer">Открыть GitHub</a>
+            </div>
+          </div>
+
+          <div class="ask-list" aria-label="Что нужно для MVP">
+            <article>
+              <span>01</span>
+              <strong>FDM-принтеры / лабораторный стенд</strong>
+              <p>проверка реального контура и механики печати</p>
+            </article>
+            <article>
+              <span>02</span>
+              <strong>Экспертиза Cura / Marlin / USB-streaming</strong>
+              <p>буфер, задержки, bounded correction и безопасная подача команд</p>
+            </article>
+            <article>
+              <span>03</span>
+              <strong>Датасет телеметрии</strong>
+              <p>реальные сценарии дефектов, разметка и валидация</p>
+            </article>
+            <article>
+              <span>04</span>
+              <strong>Пилотная валидация</strong>
+              <p>лабораторная площадка, обратная связь и MVP-цикл</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>NextGen Slicer</span>
+        <span>ballsteamsupport@gmail.com</span>
+        <span id="currentYear"></span>
+      </div>
+    </footer>
   </div>
-  <nav class="nav-dropdown" id="navDropdown">
-    <a href="#hero">Главная</a>
-    <a href="#theory">Теоретическая часть</a>
-    <a href="#tech">Техническая часть</a>
-    <a href="#news">Что нового</a>
-    <a href="#economics">Экономика</a>
-    <a href="#about">О нас и контакты</a>
-  </nav>
-</header>
 
-<main>
-  <!-- 1. ГЛАВНАЯ -->
-  <section id="hero" class="section-wrap">
-    <div class="content-left">
-      <h1>NextGen Slicer</h1>
-      <p class="subtitle">Первый слайсер с ИИ-коррекцией в реальном времени.</p>
-      <div class="key-box">
-        <strong>Что же это?</strong> Это единственное решение, объединяющее динамическую коррекцию во время печати (не только пост-анализ), NLP-анализ G-кода и обучение в симуляции Unity. В отличие от Blacksmith, не привязаны к своему принтеру; в отличие от AMFG, работает не только на уровне управления заказами, но и на уровне физического контура управления.
-      </div>
-    </div>
-    <div class="image-box">
-      <img src="img/img2.jpg" alt="NextGen Slicer (светлая тема)" class="theme-img light-img">
-      <img src="img/img1.jpg" alt="NextGen Slicer (тёмная тема)" class="theme-img dark-img">
-    </div>
-  </section>
-
-  <!-- 2. ТЕОРЕТИЧЕСКАЯ ЧАСТЬ -->
-  <section id="theory" class="section-wrap accordion">
-    <div class="accordion-header">Теоретическая часть <span class="arrow">▼</span></div>
-    <div class="accordion-content">
-      <div class="content-inner">
-        <h3 class="section-title">Аудитория потребителей</h3>
-        <ul class="subtle-list">
-          <li>Малые частные мастерские 3D-печати</li>
-          <li>R&D отделы промышленных заводов</li>
-          <li>Студенты-инженеры и исследовательские лаборатории</li>
-        </ul>
-        <div class="key-box">Все, кто сталкивается с <strong>высоким процентом брака</strong> и необходимостью постоянного контроля печати.</div>
-
-        <h3 class="section-title">Проблемы рынка и ограничения аналогов</h3>
-        <p>Основные боли: высокая стоимость брака, необходимость постоянного присутствия человека, отсутствие зрения у принтера. Облачные камеры только останавливают печать, но не исправляют её.</p>
-        <div class="table-responsive">
-          <table>
-            <tr><th>Решение</th><th>Недостаток</th></tr>
-            <tr><td>3MF Consortium</td><td>Требует поддержки всего ПО; нет обратной связи</td></tr>
-            <tr><td>Markforged Blacksmith</td><td>Жесткая привязка к экосистеме Markforged</td></tr>
-            <tr><td>AMFG MES</td><td>Высокий порог внедрения, требует ИТ-ресурсов</td></tr>
-            <tr><td>3DPrinterOS</td><td>Зависимость от интернета, поверхностный контроль геометрии</td></tr>
-            <tr><td>Desktop Metal Live Sinter</td><td>Только для спекания металлов/керамики</td></tr>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. ТЕХНИЧЕСКАЯ ЧАСТЬ -->
-  <section id="tech" class="section-wrap accordion">
-    <div class="accordion-header">Техническая часть <span class="arrow">▼</span></div>
-    <div class="accordion-content">
-      <div class="content-inner">
-        <h3 class="section-title">УТП (Уникальное торговое предложение)</h3>
-        <ul class="subtle-list">
-          <li><strong>Оригинально:</strong> единственное решение с динамической коррекцией во время печати</li>
-          <li><strong>Понятно:</strong> NLP-анализ G-кода + обучение в симуляции Unity</li>
-          <li><strong>Правдиво:</strong> работает с любыми FDM-принтерами, не требует постоянного интернета</li>
-          <li><strong>Запоминается:</strong> динамическое изменение G-кода через USB-стриминг с учетом буфера Marlin</li>
-        </ul>
-
-        <h3 class="section-title">Архитектура решения</h3>
-        <div class="key-box">
-          <strong>Замкнутый интеллектуальный контур:</strong><br>
-          5+ датчиков → Нейросеть Mamba → Слой безопасности → Патчинг G-кода через USB-стриминг
-        </div>
-        <p><strong>Стек технологий:</strong> Cura Engine (база), PyTorch (обучение), Unity + ML-Agents (симуляция), Mamba/SSM (временные ряды), NLP-анализ (структура G-кода), Safety Layer (безопасный патчинг), USB-стриминг (работа с Marlin без интернета).</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4. ЧТО НОВОГО -->
-  <section id="news" class="section-wrap pagination-section">
-    <div class="pagination-header">Что нового</div>
-    <div class="carousel-wrapper">
-      <button class="carousel-btn btn-prev" id="prevBtn">❮</button>
-      <button class="carousel-btn btn-next" id="nextBtn">❯</button>
-      <div class="carousel-track" id="carouselTrack"></div>
-      <div class="carousel-controls" id="dotsContainer"></div>
-    </div>
-  </section>
-
-  <!-- Полноэкранный попап новостей -->
-  <div class="news-modal" id="newsModal">
-    <button class="news-modal-close" id="newsModalClose">×</button>
-    <div class="news-modal-content">
-      <div class="news-modal-date" id="newsModalDate"></div>
-      <h2 class="news-modal-title" id="newsModalTitle"></h2>
-      <div class="news-modal-body" id="newsModalBody"></div>
-    </div>
-  </div>
-
-  <!-- 5. ЭКОНОМИКА -->
-  <section id="economics" class="section-wrap accordion">
-    <div class="accordion-header">Экономика <span class="arrow">▼</span></div>
-    <div class="accordion-content">
-      <div class="content-inner">
-        <h3 class="section-title">Каналы продвижения</h3>
-        <ul class="subtle-list">
-          <li>Сообщества по интересам (Telegram, Reddit, форумы)</li>
-          <li>Профильные выставки аддитивных технологий</li>
-          <li>Прямые продажи владельцам ферм 3D-печати</li>
-          <li>Сарафанное радио и реферальная программа</li>
-        </ul>
-
-        <h3 class="section-title">Доходы</h3>
-        <div class="key-box">
-          <strong>Модель монетизации:</strong><br>
-          - Подписка для физлиц: 799-1199 ₽/мес<br>
-          - Подписка для юрлиц: от 15 999 до 44 999 ₽/мес<br>
-          - Процент с продаж пользовательских моделей и их наработок
-        </div>
-
-        <h3 class="section-title">Оптимизированная смета (~915 000 ₽)</h3>
-        <div class="table-responsive">
-          <table>
-            <tr><th>Статья расходов</th><th>Сумма (₽)</th><th>Как сэкономили</th></tr>
-            <tr><td>Сервера и ПО</td><td>657 600</td><td>Базовая цена (без НДС)</td></tr>
-            <tr><td>Размещение в ЦОД (год)</td><td>70 000</td><td>Вместо офиса. Свет и охрана включены</td></tr>
-            <tr><td>Информ. безопасность</td><td>30 000</td><td>Только критическое ПО/лицензии</td></tr>
-            <tr><td>Налог (НДФЛ 13%)</td><td>135 000</td><td>Оформление как выплата физлицу (грант)</td></tr>
-            <tr><td>Сертификат SSL</td><td>0</td><td>Бесплатный Let's Encrypt</td></tr>
-            <tr><td>Страховка</td><td>10 000</td><td>-</td></tr>
-            <tr><td>Администрирование</td><td>12 400</td><td>Остаток на мелкие расходы/настройку</td></tr>
-            <tr style="font-weight:700;"><td>Итого</td><td>~915 000</td><td>Запас ~85 000 ₽ на непредвиденное</td></tr>
-          </table>
-        </div>
-        <p style="margin-top:1rem; font-size:0.9rem;">Дополнительно: научная статья - 20 000 ₽ | Маркетинг - до 65 000 ₽</p>
-
-        <h3 class="section-title">Ключевые метрики</h3>
-        <div class="metrics-list">
-          <div class="metric-item">Популярность проекта</div>
-          <div class="metric-item">Спрос на продукт</div>
-          <div class="metric-item">Отзывы аудитории о качестве разработки</div>
-          <div class="metric-item">Retention пользователей</div>
-        </div>
-        <p style="font-style:italic; color:var(--text-secondary); margin-top:0.5rem;">Отслеживаются через встроенную аналитику и обратную связь.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 6. О НАС И КОНТАКТЫ -->
-  <section id="about" class="section-wrap accordion">
-    <div class="accordion-header">О нас и контакты <span class="arrow">▼</span></div>
-    <div class="accordion-content">
-      <div class="content-inner">
-        <h3 class="section-title">Наше преимущество</h3>
-        <div class="key-box" style="background: linear-gradient(135deg, var(--accent-soft), transparent); border-left-color: var(--accent-hover);">
-          <p style="font-weight:700; margin-bottom:0.5rem;">Единственное решение, объединяющее:</p>
-          <ul class="subtle-list">
-            <li>Динамическую коррекцию во время печати (не только пост-анализ)</li>
-            <li>NLP-анализ G-кода как последовательного текста</li>
-            <li>Обучение в симуляции Unity (Sim-to-Real)</li>
-          </ul>
-          <p style="margin-top:0.8rem;"><strong>Главное преодолённое ограничение:</strong> не привязаны к одному принтеру (против Blacksmith), не требуем постоянного интернета (против 3DPrinterOS), работаем с FDM (против Live Sinter), даем обратную связь в реальном времени (против 3MF).</p>
-          <p style="margin-top:0.5rem;"><strong>Уникальная возможность:</strong> динамическое изменение G-кода на лету через USB-стриминг с учетом буфера Marlin - никто из конкурентов этого не делает.</p>
-        </div>
-
-        <h3 class="section-title">Команда</h3>
-        <p style="margin-bottom:1rem;">Нажмите на карточку, чтобы увидеть фото:</p>
-        <div class="team-grid">
-          <div class="team-card" data-img="img/Danil.jpg"><div class="name">Даниил Григорьев</div><div class="role">Капитан, интеграция, виртуальная среда</div></div>
-          <div class="team-card" data-img="img/Artem.jpg"><div class="name">Артем Щудро</div><div class="role">Архитектор нейросетей</div></div>
-          <div class="team-card" data-img="img/Maxim.jpg"><div class="name">Максим Прищепа</div><div class="role">Инженер по сенсорам, ассистент ИИ</div></div>
-          <div class="team-card" data-img="img/Kirill.jpg"><div class="name">Кирилл Власов</div><div class="role">Экономист, патенты, разработчик сайта</div></div>
-          <div class="team-card" data-img="img/Valera.jpg"><div class="name">Валерий Шевцов</div><div class="role">Симуляции, тестировщик среды</div></div>
-        </div>
-
-        <h3 class="section-title">Контакты</h3>
-        <p>Готовы начать сотрудничество или протестировать бета-версию?</p>
-        <div class="contact-links">
-          <a href="mailto:ballsteamsupport@gmail.com">Email</a>
-          <a href="https://github.com/BallsTeamOff" target="_blank">GitHub</a>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<!-- Модальное окно команды -->
-<div class="modal-overlay" id="teamModal">
-  <div class="modal-box photo-modal">
-    <button class="modal-close" id="closeModal">×</button>
-    <img id="modalImg" src="" alt="Участник" class="modal-img-full">
-  </div>
-</div>
-
-<script>
-  // ===== ДАННЫЕ НОВОСТЕЙ (РЕДАКТИРОВАТЬ ЗДЕСЬ ГАДДЭМ) =====
-  // Чтобы добавить новость, скопируйте объект {} и вставьте в массив.
-  // id должен быть уникальным. fullContent поддерживает HTML.
-  const newsData = [
-    {
-      id: 1,
-      date: "Апрель 2026",
-      title: "Запуск симуляции Sim-to-Real",
-      preview: "Интегрирована физическая среда Unity + ML-Agents. Модель проходит обучение на виртуальном стенде Anycubic Mega X.",
-      fullContent: "<p>Мы успешно интегрировали физическую среду Unity в связке с ML-Agents. Это позволило создать виртуальный стенд на базе принтера Anycubic Mega X, где нейросеть обучается распознавать и предсказывать дефекты печати без затрат реального пластика и времени.</p><p><strong>Результат:</strong> сокращение затрат на реальные тесты на 70% и ускорение итераций обучения модели.</p>"
-    },
-    {
-      id: 2,
-      date: "Скоро",
-      title: "Новые обновления проекта",
-      preview: "Скоро здесь будет больше новостей о ходе разработки.",
-      fullContent: "<p>Команда активно работает над ядром парсера G-кода и Safety Layer v1. Следите за обновлениями в этом разделе. Мы планируем публиковать прогресс каждые 2-3 недели.</p>"
-    }
-  ];
-
-  // ===== ИНИЦИАЛИЗАЦИЯ =====
-  const track = document.getElementById('carouselTrack');
-  const dotsContainer = document.getElementById('dotsContainer');
-  let currentSlide = 0;
-
-  // Рендер слайдов
-  function renderCarousel() {
-    track.innerHTML = '';
-    dotsContainer.innerHTML = '';
-    newsData.forEach((news, i) => {
-      // Слайд
-      const slide = document.createElement('div');
-      slide.className = 'news-slide';
-      slide.dataset.id = news.id;
-      slide.innerHTML = `<div class="news-date">${news.date}</div><h3>${news.title}</h3><p>${news.preview}</p>`;
-      track.appendChild(slide);
-
-      // Точка
-      const dot = document.createElement('div');
-      dot.className = 'dot' + (i === 0 ? ' active' : '');
-      dot.addEventListener('click', () => goToSlide(i));
-      dotsContainer.appendChild(dot);
-    });
-    attachSlideClicks();
-  }
-
-  function goToSlide(n) {
-    currentSlide = (n + newsData.length) % newsData.length;
-    track.style.transform = `translateX(-${currentSlide * 100}%)`;
-    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
-  }
-
-  function attachSlideClicks() {
-    document.querySelectorAll('.news-slide').forEach(slide => {
-      slide.addEventListener('click', () => {
-        const id = parseInt(slide.dataset.id);
-        const data = newsData.find(n => n.id === id);
-        if (!data) return;
-        document.getElementById('newsModalDate').textContent = data.date;
-        document.getElementById('newsModalTitle').textContent = data.title;
-        document.getElementById('newsModalBody').innerHTML = data.fullContent;
-        document.getElementById('newsModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-      });
-    });
-  }
-
-  document.getElementById('prevBtn').addEventListener('click', () => goToSlide(currentSlide - 1));
-  document.getElementById('nextBtn').addEventListener('click', () => goToSlide(currentSlide + 1));
-  setInterval(() => goToSlide(currentSlide + 1), 8000);
-
-  // Закрытие попапа новостей
-  document.getElementById('newsModalClose').addEventListener('click', () => {
-    document.getElementById('newsModal').classList.remove('active');
-    document.body.style.overflow = '';
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.getElementById('newsModal').classList.contains('active')) {
-      document.getElementById('newsModal').classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  });
-
-  // ===== ТЕМА =====
-  const toggle = document.getElementById('themeToggle');
-  const html = document.documentElement;
-  const saved = localStorage.getItem('theme');
-  if (saved) html.setAttribute('data-theme', saved);
-  toggle.addEventListener('click', () => {
-    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-  });
-
-  // ===== ГАМБУРГЕР =====
-  const hamburger = document.getElementById('hamburger');
-  const nav = document.getElementById('navDropdown');
-  const navLinks = nav.querySelectorAll('a');
-  hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); nav.classList.toggle('active'); });
-  navLinks.forEach(link => { link.addEventListener('click', () => { hamburger.classList.remove('active'); nav.classList.remove('active'); }); });
-  document.addEventListener('click', (e) => { if (!hamburger.contains(e.target) && !nav.contains(e.target)) { hamburger.classList.remove('active'); nav.classList.remove('active'); } });
-
-  // ===== АККОРДЕОНЫ =====
-  document.querySelectorAll('.accordion-header').forEach(header => {
-    header.addEventListener('click', () => {
-      const parent = header.parentElement;
-      const content = parent.querySelector('.accordion-content');
-      parent.classList.toggle('active');
-      if (parent.classList.contains('active')) {
-        content.style.maxHeight = content.scrollHeight + 'px';
-      } else { content.style.maxHeight = '0'; }
-    });
-  });
-
-  // ===== МОДАЛКА КОМАНДЫ =====
-  const modal = document.getElementById('teamModal');
-  const modalImg = document.getElementById('modalImg');
-  document.querySelectorAll('.team-card').forEach(card => {
-    card.addEventListener('click', () => {
-      modalImg.src = card.dataset.img || 'img/default-avatar.png';
-      modal.classList.add('active');
-    });
-  });
-  document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('active'));
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
-
-  // ===== ПОДСВЕТКА АКТИВНОГО РАЗДЕЛА =====
-  const sections = document.querySelectorAll('section[id]');
-  window.addEventListener('scroll', () => {
-    let current = '';
-    sections.forEach(sec => {
-      const rect = sec.getBoundingClientRect();
-      if (rect.top <= 150 && rect.bottom >= 150) current = sec.id;
-    });
-    navLinks.forEach(link => { link.classList.toggle('active', link.getAttribute('href') === `#${current}`); });
-  });
-
-  // Запуск
-  renderCarousel();
-</script>
+  <script src="./script.js?v=20260522-final-pass"></script>
 </body>
 </html>

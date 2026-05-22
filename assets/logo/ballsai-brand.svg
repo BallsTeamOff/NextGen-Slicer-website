@@ -1,0 +1,31 @@
+<svg width="236" height="62" viewBox="0 0 236 62" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">BallsAi</title>
+  <desc id="desc">BallsAi team brand mark for NextGen Slicer</desc>
+  <defs>
+    <linearGradient id="mark" x1="10" y1="8" x2="58" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3DD7F5"/>
+      <stop offset="0.55" stop-color="#7FE8C8"/>
+      <stop offset="1" stop-color="#8BF84B"/>
+    </linearGradient>
+    <linearGradient id="text" x1="70" y1="16" x2="184" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6FFF8"/>
+      <stop offset="0.56" stop-color="#8FE9EE"/>
+      <stop offset="1" stop-color="#B8FF78"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.235 0 0 0 0 0.843 0 0 0 0 0.961 0 0 0 0.45 0"/>
+      <feBlend in2="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <rect x="1" y="1" width="234" height="60" rx="21" fill="#07100D" fill-opacity="0.72"/>
+  <rect x="1" y="1" width="234" height="60" rx="21" stroke="url(#mark)" stroke-opacity="0.2"/>
+  <path d="M14 46V16C14 11.6 17.6 8 22 8H47C51.4 8 55 11.6 55 16V41C55 45.4 51.4 49 47 49H19C16.2 49 14 46.8 14 44Z" fill="#0B1715" stroke="#8BF84B" stroke-opacity="0.18"/>
+  <path d="M27 42H21L31.1 18H38.9L49 42H42.7L40.9 37.2H28.8L27 42ZM30.6 32.4H39.1L34.9 21.5L30.6 32.4Z" fill="url(#mark)" filter="url(#glow)"/>
+  <path d="M23 20H32.2C36.7 20 39.4 22.2 39.4 25.6C39.4 27.5 38.4 29.1 36.8 29.9C39.1 30.6 40.5 32.4 40.5 35C40.5 39 37.4 42 32.2 42H23V20ZM29.2 28.4H31.8C33.1 28.4 33.8 27.7 33.8 26.6C33.8 25.5 33 24.9 31.8 24.9H29.2V28.4ZM29.2 37H32.3C33.8 37 34.7 36.2 34.7 34.8C34.7 33.5 33.8 32.7 32.3 32.7H29.2V37Z" fill="#F5FFF7" fill-opacity="0.9"/>
+  <text x="70" y="35" fill="url(#text)" font-family="Bahnschrift, Segoe UI, Arial, sans-serif" font-size="25" font-weight="800" letter-spacing="-0.6">BallsAi</text>
+  <text x="72" y="49" fill="#B7C6C0" fill-opacity="0.78" font-family="Cascadia Mono, Consolas, monospace" font-size="7.5" font-weight="700" letter-spacing="1.6">NEXTGEN SLICER TEAM</text>
+  <circle cx="218" cy="18" r="3" fill="#8BF84B"/>
+  <path d="M197 45H218" stroke="#3DD7F5" stroke-opacity="0.55" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
