@@ -12,6 +12,11 @@ This repository contains only the public website. It does not include the full w
 - Runtime demo contour: https://dank1-pro.github.io/nextgen-slicer/
 - Team contact: ballsteamsupport@gmail.com
 
+## Links to websites
+
+- Website repository: https://ballsteamoff.github.io/NextGen-Slicer-website/
+- Runtime demo contour: https://dank1-pro.github.io/nextgen-slicer/
+
 ## What The Project Is
 
 NextGen Slicer is not positioned as a finished industrial product yet. It is currently a strong runtime prototype and an engineering foundation for validation on a real FDM stand.
@@ -111,6 +116,11 @@ NextGen Slicer — это продуктовая концепция и runtime-�
 - Репозиторий сайта: https://github.com/BallsTeamOff/NextGen-Slicer-website
 - Demo-контур runtime: https://dank1-pro.github.io/nextgen-slicer/
 - Контакт команды: ballsteamsupport@gmail.com
+
+## Ссылки на сайты
+
+- Сайт: https://ballsteamoff.github.io/NextGen-Slicer-website/
+- Demo-контур runtime: https://dank1-pro.github.io/nextgen-slicer/
 
 ## Что это за проект
 
