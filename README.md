@@ -14,7 +14,7 @@ This repository contains only the public website. It does not include the full w
 
 ## Links to websites
 
-- Website repository: https://ballsteamoff.github.io/NextGen-Slicer-website/
+- Website: https://ballsteamoff.github.io/NextGen-Slicer-website/
 - Runtime demo contour: https://dank1-pro.github.io/nextgen-slicer/
 
 ## What The Project Is
